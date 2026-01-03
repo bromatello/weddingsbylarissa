@@ -1,0 +1,8 @@
+# Files to exclude from Docker context
+.git
+.vscode
+node_modules
+*.md
+*.psd
+*.log
+.DS_Store

@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  web-node:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    image: weddingsbylarissa-node:latest
+    ports:
+      - "8080:5000"
+    volumes:
+      - .:/usr/src/app:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
