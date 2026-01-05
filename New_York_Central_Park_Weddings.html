@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3-Column Responsive Layout</title>
+    <style>
+        /* Basic reset */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        /* The main container restricted to 1024px */
+        .container {
+            max-width: 1024px;
+            margin: 0 auto; /* Centers the page */
+            display: flex;
+            flex-wrap: wrap; /* Allows columns to drop down on mobile */
+            gap: 20px; /* Space between columns */
+        }
+
+        /* The individual columns */
+        .column {
+            flex: 1; /* Distributes space equally */
+            min-width: 300px; /* Ensures they don't get too thin before wrapping */
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Image styling */
+        .column img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover; /* Keeps images from stretching */
+            display: block;
+        }
+
+        /* Text panel styling */
+        .text-panel {
+            padding: 15px;
+        }
+
+        .text-panel h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .text-panel p {
+            color: #666;
+            line-height: 1.5;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 768px) {
+            .column {
+                flex: 100%; /* Forces each column to take full width on mobile */
+            }
+        }
+
+    .column {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .column:hover {
+        transform: translateY(-10px); /* Lifts the card up */
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2); /* Deepens the shadow */
+    }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="column">
+            <img src="https://picsum.photos/id/10/400/300" alt="Landscape">
+            <div class="text-panel">
+                <h3>The Mountains</h3>
+                <p>A beautiful description of the mountain ranges and the crisp morning air found in the peaks.</p>
+            </div>
+        </div>
+
+        <div class="column">
+            <img src="https://picsum.photos/id/20/400/300" alt="Office">
+            <div class="text-panel">
+                <h3>The Workspace</h3>
+                <p>Explore the modern minimalist office layout designed for maximum productivity and focus.</p>
+            </div>
+        </div>
+
+        <div class="column">
+            <img src="https://picsum.photos/id/30/400/300" alt="Nature">
+            <div class="text-panel">
+                <h3>The Forest</h3>
+                <p>Deep within the ancient woods, nature thrives in a delicate balance of light and shadow.</p>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
