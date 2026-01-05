@@ -6,3 +6,4 @@ node_modules
 *.psd
 *.log
 .DS_Store
+npm-debug.log
