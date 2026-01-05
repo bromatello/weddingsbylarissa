@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: larissa-wedding-site
     image: weddingsbylarissa-node:v1.0.1
     environment:
       - PORT=5000
