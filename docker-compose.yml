@@ -1,11 +1,13 @@
-version: '3.8'
+
 
 services:
   web-node:
     build:
       context: .
-      dockerfile: Dockerfile.node
-    image: weddingsbylarissa-node:latest
+      dockerfile: Dockerfile
+    image: weddingsbylarissa-node:v1.0.1
+    environment:
+      - PORT=5000
     ports:
       - "8080:5000"
     volumes:
