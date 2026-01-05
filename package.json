@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "serve . -l tcp://0.0.0.0:${PORT:-5000}"
+    "start": "npx serve . -l tcp://0.0.0.0:${PORT:-5000}"
   },
   "dependencies": {
     "serve": "^14.2.0"
