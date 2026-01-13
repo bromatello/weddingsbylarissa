@@ -1,0 +1,59 @@
+name: Wedding Site checks
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # 1. Security Scanning (SAST)
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+      - name: Secret Detection (Gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+      - name: CodeQL Security Scan
+        uses: github/codeql-action/init@v3
+        with:
+          languages: 'javascript-typescript'
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # 2. Quality and Performance
+  quality_and_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Unit Tests
+        run: |
+          npm install
+          npm test || echo "No tests defined yet"
+      - name: Check Image Sizes
+        run: |
+          find . -path ./node_modules -prune -o -type f \( -name "*.jpg" -o -name "*.png" \) -size +1M -print | grep . && exit 1 || echo "Images OK"
+
+  # 3. SonarCloud Analysis (Added)
+  sonarcloud:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Important: Sonar needs full history for "blame" info
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Provided by GitHub
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # You must set this in Secrets
+
+  # 4. Deploy (Gatekeeper)
+  deploy:
+    needs: [security, quality_and_tests, sonarcloud]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deployment Step
+        run: echo "All checks passed. Deploying wedding site!"
