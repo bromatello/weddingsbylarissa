@@ -1,0 +1,30 @@
+repos:
+  # 1. Standard Community Hooks (Formatting & Safety)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+
+  # 2. Secret Detection (Gitleaks)
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.0
+    hooks:
+      - id: gitleaks
+
+  # 3. Local Hooks (Your custom tests)
+ # - repo: local
+  #  hooks:
+   #   - id: npm-test
+    #    name: Run Wedding Site Unit Tests
+     #   entry: npm test
+      #  language: system
+       # pass_filenames: false
+        #stages: [commit]
+
+#      - id: image-size-check
+ #       name: Block Large Images (>1MB)
+  #      entry: bash -c 'find . -path ./node_modules -prune -o -type f \( -name "*.jpg" -o -name "*.png" \) -size +1M -print | grep . && exit 1 || exit 0'
+   #     language: system
+    #    pass_filenames: false

@@ -48,4 +48,4 @@ Quick, actionable guidance for AI assistants working on this repository.
 - If asked to do a large refactor (e.g., convert to a static site generator), propose a plan and get approval — do not proceed with a blind large-scale conversion.
 
 ---
-If you'd like, I can open a PR with this file or adjust content to match preferred tone/format. Please tell me what you'd like changed.  
+If you'd like, I can open a PR with this file or adjust content to match preferred tone/format. Please tell me what you'd like changed.
