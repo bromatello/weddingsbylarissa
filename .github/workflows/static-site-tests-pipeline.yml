@@ -110,22 +110,37 @@ jobs:
     needs: [deploy]  # Runs ONLY after the deploy job finishes
     runs-on: ubuntu-latest
     steps:
-      - name: Pull newly pushed image
-        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/wedding-site:latest
-
-      - name: Run temporary container
+      - name: Pull and Run Smoke Test
+        id: smoke_check # ID is used to check the outcome later
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          docker run -d --name smoke-check -p 5001:5000 ${{ secrets.DOCKERHUB_USERNAME }}/wedding-site:latest
-          # Wait a few seconds for the app to actually start
+          docker pull $DOCKER_USER/wedding-site:latest
+          docker run -d --rm --name smoke-check -p 5001:5000 $DOCKER_USER/wedding-site:latest
           sleep 10
-
-      - name: Check if site is reachable
-        run: |
-          # Use curl to check if the homepage returns a '200 OK'
           curl --fail http://localhost:5001 || exit 1
-
-      - name: Cleanup
-        if: always() # Ensures the container is removed even if the test fails
-        run: |
           docker rm -f smoke-check
-          docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/wedding-site:latest
+
+      - name: Generate Manager Summary
+        if: always() # IMPORTANT: Runs even if the smoke test fails
+        run: |
+          # 1. Determine Smoke Test Emoji based on previous step outcome
+          if [ "${{ steps.smoke_check.outcome }}" == "success" ]; then
+            SMOKE_STATUS="✅ Passed (Site Reachable)"
+          else
+            SMOKE_STATUS="❌ Failed (Site Unreachable)"
+          fi
+
+          # 2. Build the Markdown Summary
+          echo "## 🚀 Wedding Site Pipeline Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🛡️ Security & Quality Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **SonarCloud:** [View Detailed Report](https://sonarcloud.io/project/overview?id=bromatello_weddingsbylarissa)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Docker Scout:** Scan Completed ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Artifacts & Testing" >> $GITHUB_STEP_SUMMARY
+          echo "- **Docker Hub Repo:** [chrisbromatello/wedding-site](https://hub.docker.com/r/chrisbromatello/wedding-site)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Latest Smoke Test:** $SMOKE_STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build ID (SHA):** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> _Note: Deployment to Google Cloud Run is currently pending setup._" >> $GITHUB_STEP_SUMMARY
