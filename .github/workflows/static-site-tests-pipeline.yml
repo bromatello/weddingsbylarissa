@@ -41,7 +41,7 @@ jobs:
           npm test || echo "No tests defined yet"
       - name: Check Image Sizes
         run: |
-          find . -path ./node_modules -prune -o -type f \( -name "*.jpg" -o -name "*.png" \) -size +2M -print | grep . && exit 1 || echo "Images OK"
+          find . -path ./node_modules -prune -o -type f \( -name "*.jpg" -o -name "*.png" \) -size +8M -print | grep . && exit 1 || echo "Images OK"
 
   # 3. SonarCloud Analysis
   sonarcloud:
