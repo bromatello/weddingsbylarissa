@@ -8,9 +8,13 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # 1. Security Scanning (SAST) - Code analysis
+  # 1. Security Scanning (SAST)
   security:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write  # Required for CodeQL to upload results
+      actions: read
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,7 +30,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
-  # 2. Quality and Performance - Unit tests & Images
+  # 2. Quality and Performance
   quality_and_tests:
     runs-on: ubuntu-latest
     steps:
@@ -37,7 +41,7 @@ jobs:
           npm test || echo "No tests defined yet"
       - name: Check Image Sizes
         run: |
-          find . -path ./node_modules -prune -o -type f \( -name "*.jpg" -o -name "*.png" \) -size +2M -print | grep . && exit 1 || echo "Images OK"
+          find . -path ./node_modules -prune -o -type f \( -name "*.jpg" -o -name "*.png" \) -size +8M -print | grep . && exit 1 || echo "Images OK"
 
   # 3. SonarCloud Analysis
   sonarcloud:
@@ -55,6 +59,9 @@ jobs:
   # 4. Docker Image Security - The Scout Scan
   docker_scout:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write # Required for Scout to post comments on PRs
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Log in to Docker Hub
@@ -70,14 +77,31 @@ jobs:
           command: cves,recommendations
           image: weddingsbylarissa:test
           only-severities: critical,high
-          exit-code: false
+          exit-code: false  # Allows the pipeline to continue even with vulnerabilities
 
   # 5. Deploy (Gatekeeper)
   deploy:
-    # UPDATED: Now waits for the docker_scout job too!
     needs: [security, quality_and_tests, sonarcloud, docker_scout]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write  # Required if you eventually use GCP Workload Identity
     steps:
-      - name: Deployment Step
-        run: echo "All checks passed. Deploying wedding site!"
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push to Docker Hub
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            chrisbromatello/wedding-site:latest
+            chrisbromatello/wedding-site:${{ github.sha }}

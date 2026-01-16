@@ -11,7 +11,7 @@ RUN apk add --no-cache wget
 
 # Copy package manifest and install production dependencies
 COPY package.json ./
-RUN npm install --production --no-audit --no-fund
+RUN npm install --production --no-audit --no-fund --ignore-scripts
 
 # Copy site files
 COPY . .
