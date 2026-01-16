@@ -105,3 +105,27 @@ jobs:
           tags: |
             chrisbromatello/wedding-site:latest
             chrisbromatello/wedding-site:${{ github.sha }}
+# 6. Post-Deploy Smoke Test
+  smoke_test:
+    needs: [deploy]  # Runs ONLY after the deploy job finishes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull newly pushed image
+        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/wedding-site:latest
+
+      - name: Run temporary container
+        run: |
+          docker run -d --name smoke-check -p 5001:5000 ${{ secrets.DOCKERHUB_USERNAME }}/wedding-site:latest
+          # Wait a few seconds for the app to actually start
+          sleep 10
+
+      - name: Check if site is reachable
+        run: |
+          # Use curl to check if the homepage returns a '200 OK'
+          curl --fail http://localhost:5001 || exit 1
+
+      - name: Cleanup
+        if: always() # Ensures the container is removed even if the test fails
+        run: |
+          docker rm -f smoke-check
+          docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/wedding-site:latest
