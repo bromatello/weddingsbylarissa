@@ -6,7 +6,7 @@ pipeline {
         // 1. Paste your Harness Webhook URL here
         HARNESS_WEBHOOK = "https://app.harness.io/gateway/pipeline/api/webhook/custom/GC7ejTXlQa26K9GBecb4Zg/v3?accountIdentifier=6gvkA-e0SF6kkyO0tu7Qag&orgIdentifier=default&projectIdentifier=default_project&pipelineIdentifier=WeddingAppDeploy&triggerIdentifier=jenkinstrigger"
         // 2. Paste your Harness API Key here
-        HARNESS_KEY = "pat.abc123yourkeyhere"
+        HARNESS_KEY = credentials('harness-api-token')
     }
 
     stages {
