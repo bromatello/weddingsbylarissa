@@ -18,7 +18,7 @@ spec:
       automountServiceAccountToken: false 
       containers:
       - name: wedding-container
-        image: <+artifact.image>
+        image: <+artifacts.primary.image>
         ports:
         - containerPort: 80
         # FIX 2: Define exactly how much "power" the app gets
