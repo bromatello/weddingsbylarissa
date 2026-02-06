@@ -20,7 +20,7 @@ spec:
       - name: wedding-container
         image: europe-west2-docker.pkg.dev/testproject01-481614/wedding-repo/weddingsbylarissa:6
         ports:
-        - containerPort: 80
+        - containerPort: 5000
         # FIX 2: Define exactly how much "power" the app gets
         resources:
           requests:
