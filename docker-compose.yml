@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: weddings-by-larissa
-    image: weddingsbylarissa:v1.0.1
+    image: weddingsbylarissa:v1.0.2
     environment:
       - PORT=5000
     ports:
