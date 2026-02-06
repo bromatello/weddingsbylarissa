@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wedding-app-deployment
+  labels:
+    app: wedding-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wedding-app
+  template:
+    metadata:
+      labels:
+        app: wedding-app
+    spec:
+      # FIX 1: Security best practice for apps that don't talk to K8s API
+      automountServiceAccountToken: false 
+      containers:
+      - name: wedding-container
+        image: <+artifact.image>
+        ports:
+        - containerPort: 80
+        # FIX 2: Define exactly how much "power" the app gets
+        resources:
+          requests:
+            cpu: "250m"      # GKE Autopilot minimum
+            memory: "512Mi"  # GKE Autopilot minimum
+          limits:
+            cpu: "500m"
+            memory: "512Mi"  # On Autopilot, limits should usually match requests for memory
