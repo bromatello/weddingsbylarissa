@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wedding-app-deployment
+  labels:
+    app: wedding-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wedding-app
+  template:
+    metadata:
+      labels:
+        app: wedding-app
+    spec:
+      containers:
+      - name: wedding-container
+        image: <+artifact.image> # Harness handles the versioning!
+        ports:
+        - containerPort: 80
