@@ -8,6 +8,17 @@ on:
     branches: [ "main" ]
 
 jobs:
+  precommit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files
+
   # 1. Security Scanning (SAST)
   security:
     runs-on: ubuntu-latest
@@ -81,7 +92,7 @@ jobs:
 
   # 5. Deploy (Gatekeeper)
   deploy:
-    needs: [security, quality_and_tests, sonarcloud, docker_scout]
+    needs: [precommit,security, quality_and_tests, sonarcloud, docker_scout]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     permissions:
