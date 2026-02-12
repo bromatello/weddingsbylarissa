@@ -9,6 +9,7 @@ on:
 
 jobs:
 
+  # 0. Pre-commit checks
   precommit:
     runs-on: ubuntu-latest
     steps:
@@ -37,6 +38,7 @@ jobs:
           curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/precommit"
 
 
+  # 1. Security Scanning (SAST)
   security:
     runs-on: ubuntu-latest
     permissions:
@@ -78,6 +80,7 @@ jobs:
           curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/security"
 
 
+  # 2. Quality and Performance
   quality_and_tests:
     runs-on: ubuntu-latest
     steps:
@@ -109,6 +112,7 @@ jobs:
           curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/quality_and_tests"
 
 
+  # 3. SonarCloud Analysis
   sonarcloud:
     runs-on: ubuntu-latest
     steps:
@@ -139,6 +143,7 @@ jobs:
           curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/sonarcloud"
 
 
+  # 4. Docker Image Security - The Scout Scan
   docker_scout:
     runs-on: ubuntu-latest
     permissions:
@@ -173,4 +178,106 @@ jobs:
         run: |
           END_TIME=$(date +%s)
           DURATION=$((END_TIME - START_TIME))
-          echo
+          echo "PIPELINE_DURATION_SECONDS=$DURATION" >> $GITHUB_ENV
+
+      - name: Push pipeline duration metric
+        run: |
+          echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
+          curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/docker_scout"
+
+
+  # 5. Deploy (Gatekeeper)
+  deploy:
+    needs: [precommit, security, quality_and_tests, sonarcloud, docker_scout]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Start timer
+        id: start
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push to Docker Hub
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            chrisbromatello/wedding-site:latest
+            chrisbromatello/wedding-site:${{ github.sha }}
+
+      - name: End timer and calculate duration
+        id: end
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "PIPELINE_DURATION_SECONDS=$DURATION" >> $GITHUB_ENV
+
+      - name: Push pipeline duration metric
+        run: |
+          echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
+          curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/deploy"
+
+
+  # 6. Post-Deploy Smoke Test
+  smoke_test:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start timer
+        id: start
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+      - name: Pull and Run Smoke Test
+        id: smoke_check
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          docker pull $DOCKER_USER/wedding-site:latest
+          docker run -d --rm --name smoke-check -p 5001:5000 $DOCKER_USER/wedding-site:latest
+          sleep 10
+          curl --fail http://localhost:5001 || exit 1
+          docker rm -f smoke-check
+
+      - name: End timer and calculate duration
+        id: end
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "PIPELINE_DURATION_SECONDS=$DURATION" >> $GITHUB_ENV
+
+      - name: Push pipeline duration metric
+        run: |
+          echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
+          curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/smoke_test"
+
+      - name: Generate Manager Summary
+        if: always()
+        run: |
+          if [ "${{ steps.smoke_check.outcome }}" == "success" ]; then
+            SMOKE_STATUS="Passed (Site Reachable)"
+          else
+            SMOKE_STATUS="Failed (Site Unreachable)"
+          fi
+
+          echo "## Wedding Site Pipeline Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Security & Quality Status" >> $GITHUB_STEP_SUMMARY
+          echo "- SonarCloud: https://sonarcloud.io/project/overview?id=bromatello_weddingsbylarissa" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker Scout: Scan Completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts & Testing" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker Hub Repo: https://hub.docker.com/r/chrisbromatello/wedding-site" >> $GITHUB_STEP_SUMMARY
+          echo "- Latest Smoke Test: $SMOKE_STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "- Build ID (SHA): \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
