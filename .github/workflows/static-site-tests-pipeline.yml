@@ -3,91 +3,202 @@ name: Wedding Site checks
 on:
   push:
     branches:
-      - '**'        # Run on every push to every branch
+      - '**'
   pull_request:
     branches: [ "main" ]
 
 jobs:
+
+  # 0. Pre-commit checks
+  precommit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start timer
+        id: start
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v4
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files
+
+      - name: End timer and calculate duration
+        id: end
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "PIPELINE_DURATION_SECONDS=$DURATION" >> $GITHUB_ENV
+
+      - name: Push pipeline duration metric
+        run: |
+          echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
+          curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/precommit"
+
+
   # 1. Security Scanning (SAST)
   security:
     runs-on: ubuntu-latest
     permissions:
-      security-events: write  # Required for CodeQL to upload results
+      security-events: write
       actions: read
       contents: read
     steps:
+      - name: Start timer
+        id: start
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Secret Detection (Gitleaks)
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: CodeQL Security Scan
         uses: github/codeql-action/init@v3
         with:
           languages: 'javascript-typescript'
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+
+      - name: End timer and calculate duration
+        id: end
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "PIPELINE_DURATION_SECONDS=$DURATION" >> $GITHUB_ENV
+
+      - name: Push pipeline duration metric
+        run: |
+          echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
+          curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/security"
+
 
   # 2. Quality and Performance
   quality_and_tests:
     runs-on: ubuntu-latest
     steps:
+      - name: Start timer
+        id: start
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+
       - uses: actions/checkout@v4
+
       - name: Run Unit Tests
         run: |
           npm install --ignore-scripts
           npm test || echo "No tests defined yet"
+
       - name: Check Image Sizes
         run: |
           find . -path ./node_modules -prune -o -type f \( -name "*.jpg" -o -name "*.png" \) -size +8M -print | grep . && exit 1 || echo "Images OK"
+
+      - name: End timer and calculate duration
+        id: end
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "PIPELINE_DURATION_SECONDS=$DURATION" >> $GITHUB_ENV
+
+      - name: Push pipeline duration metric
+        run: |
+          echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
+          curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/quality_and_tests"
+
 
   # 3. SonarCloud Analysis
   sonarcloud:
     runs-on: ubuntu-latest
     steps:
+      - name: Start timer
+        id: start
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      - name: End timer and calculate duration
+        id: end
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "PIPELINE_DURATION_SECONDS=$DURATION" >> $GITHUB_ENV
+
+      - name: Push pipeline duration metric
+        run: |
+          echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
+          curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/sonarcloud"
+
+
   # 4. Docker Image Security - The Scout Scan
   docker_scout:
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write # Required for Scout to post comments on PRs
+      pull-requests: write
       contents: read
     steps:
+      - name: Start timer
+        id: start
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+
       - uses: actions/checkout@v4
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Build image for scanning
         run: docker build -t weddingsbylarissa:test .
+
       - name: Docker Scout Scan
         uses: docker/scout-action@v1
         with:
           command: cves,recommendations
           image: weddingsbylarissa:test
           only-severities: critical,high
-          exit-code: false  # Allows the pipeline to continue even with vulnerabilities
+          exit-code: false
+
+      - name: End timer and calculate duration
+        id: end
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "PIPELINE_DURATION_SECONDS=$DURATION" >> $GITHUB_ENV
+
+      - name: Push pipeline duration metric
+        run: |
+          echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
+          curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/docker_scout"
+
 
   # 5. Deploy (Gatekeeper)
   deploy:
-    needs: [security, quality_and_tests, sonarcloud, docker_scout]
+    needs: [precommit, security, quality_and_tests, sonarcloud, docker_scout]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     permissions:
       contents: read
-      id-token: write  # Required if you eventually use GCP Workload Identity
+      id-token: write
     steps:
+      - name: Start timer
+        id: start
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+
       - name: Checkout Code
         uses: actions/checkout@v4
 
@@ -105,13 +216,31 @@ jobs:
           tags: |
             chrisbromatello/wedding-site:latest
             chrisbromatello/wedding-site:${{ github.sha }}
-# 6. Post-Deploy Smoke Test
+
+      - name: End timer and calculate duration
+        id: end
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "PIPELINE_DURATION_SECONDS=$DURATION" >> $GITHUB_ENV
+
+      - name: Push pipeline duration metric
+        run: |
+          echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
+          curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/deploy"
+
+
+  # 6. Post-Deploy Smoke Test
   smoke_test:
-    needs: [deploy]  # Runs ONLY after the deploy job finishes
+    needs: [deploy]
     runs-on: ubuntu-latest
     steps:
+      - name: Start timer
+        id: start
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+
       - name: Pull and Run Smoke Test
-        id: smoke_check # ID is used to check the outcome later
+        id: smoke_check
         env:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
@@ -121,26 +250,34 @@ jobs:
           curl --fail http://localhost:5001 || exit 1
           docker rm -f smoke-check
 
-      - name: Generate Manager Summary
-        if: always() # IMPORTANT: Runs even if the smoke test fails
+      - name: End timer and calculate duration
+        id: end
         run: |
-          # 1. Determine Smoke Test Emoji based on previous step outcome
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "PIPELINE_DURATION_SECONDS=$DURATION" >> $GITHUB_ENV
+
+      - name: Push pipeline duration metric
+        run: |
+          echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
+          curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/smoke_test"
+
+      - name: Generate Manager Summary
+        if: always()
+        run: |
           if [ "${{ steps.smoke_check.outcome }}" == "success" ]; then
-            SMOKE_STATUS="✅ Passed (Site Reachable)"
+            SMOKE_STATUS="Passed (Site Reachable)"
           else
-            SMOKE_STATUS="❌ Failed (Site Unreachable)"
+            SMOKE_STATUS="Failed (Site Unreachable)"
           fi
 
-          # 2. Build the Markdown Summary
-          echo "## 🚀 Wedding Site Pipeline Report" >> $GITHUB_STEP_SUMMARY
+          echo "## Wedding Site Pipeline Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🛡️ Security & Quality Status" >> $GITHUB_STEP_SUMMARY
-          echo "- **SonarCloud:** [View Detailed Report](https://sonarcloud.io/project/overview?id=bromatello_weddingsbylarissa)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Docker Scout:** Scan Completed ✅" >> $GITHUB_STEP_SUMMARY
+          echo "### Security & Quality Status" >> $GITHUB_STEP_SUMMARY
+          echo "- SonarCloud: https://sonarcloud.io/project/overview?id=bromatello_weddingsbylarissa" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker Scout: Scan Completed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📦 Artifacts & Testing" >> $GITHUB_STEP_SUMMARY
-          echo "- **Docker Hub Repo:** [chrisbromatello/wedding-site](https://hub.docker.com/r/chrisbromatello/wedding-site)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Latest Smoke Test:** $SMOKE_STATUS" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build ID (SHA):** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "> _Note: Deployment to Google Cloud Run is currently pending setup._" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts & Testing" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker Hub Repo: https://hub.docker.com/r/chrisbromatello/wedding-site" >> $GITHUB_STEP_SUMMARY
+          echo "- Latest Smoke Test: $SMOKE_STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "- Build ID (SHA): \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
