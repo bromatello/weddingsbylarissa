@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wedding-site
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wedding-site
+  template:
+    metadata:
+      labels:
+        app: wedding-site
+    spec:
+      containers:
+        - name: wedding-site
+          image: wedding-site:local
+          ports:
+            - containerPort: 5000
+
