@@ -35,7 +35,7 @@ jobs:
       - name: Push pipeline duration metric
         run: |
           echo "URL=>>${{ secrets.PUSHGATEWAY_URL }}<<"
-          echo "RAW=${{ secrets.PUSHGATEWAY_URL }}"
+          echo "RAW=>>${{ secrets.PUSHGATEWAY_URL }}<<"
           echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
           curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/precommit"
 
