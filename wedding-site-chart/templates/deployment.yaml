@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: wedding-site
+  name: "{{ .Release.Name }}-deploy
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app: wedding-site
@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: wedding-site
-          image: wedding-site:local
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: 5000
-

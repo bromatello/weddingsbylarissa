@@ -1,0 +1,16 @@
+replicaCount: 1
+
+image:
+  repository: wedding-site
+  tag: local
+  pullPolicy: Never # Crucial for Minikube
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 5000
+  nodePort: 30080
+
+monitoring:
+  enabled: true
+  releaseLabel: monitoring
