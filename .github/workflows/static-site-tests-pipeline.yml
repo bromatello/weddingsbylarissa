@@ -284,3 +284,23 @@ jobs:
           echo "- Docker Hub Repo: https://hub.docker.com/r/chrisbromatello/wedding-site" >> $GITHUB_STEP_SUMMARY
           echo "- Latest Smoke Test: $SMOKE_STATUS" >> $GITHUB_STEP_SUMMARY
           echo "- Build ID (SHA): \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+# 7. Hand-off to Harness for Helm Deployment
+  harness_deploy:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    # Map the secrets to environment variables here
+    env:
+      ACC_ID: ${{ secrets.HARNESS_ACCOUNT_ID }}
+      API_KEY: ${{ secrets.HARNESS_API_KEY }}
+    steps:
+      - name: Trigger Harness Pipeline
+        uses: harness/deploy-action@v1
+        with:
+          harness-account-id: ${{ env.ACC_ID }}
+          harness-org-id: default
+          harness-project-id: Wedding_Project
+          harness-pipeline-id: Wedding_Site_Deploy
+          harness-api-key: ${{ env.API_KEY }}
+          variables: |
+            image_tag=${{ github.sha }}
