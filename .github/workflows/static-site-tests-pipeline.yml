@@ -295,7 +295,7 @@ jobs:
       API_KEY: ${{ secrets.HARNESS_API_KEY }}
     steps:
       - name: Trigger Harness Pipeline
-        uses: harness/deploy-action@v1
+        uses: fac/harness-deploy-action@646b107663f707f15456f9661582294191319760
         with:
           harness-account-id: ${{ env.ACC_ID }}
           harness-org-id: default
