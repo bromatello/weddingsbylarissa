@@ -34,8 +34,6 @@ jobs:
 
       - name: Push pipeline duration metric
         run: |
-          echo "URL=>>${{ secrets.PUSHGATEWAY_URL }}<<"
-          echo "RAW=>>${{ secrets.PUSHGATEWAY_URL }}<<"
           echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
           curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/precommit"
 
@@ -111,7 +109,6 @@ jobs:
       - name: Push pipeline duration metric
         run: |
           echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
-          echo "URL=>>${{ secrets.PUSHGATEWAY_URL }}<<"
           curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/quality_and_tests"
 
 
@@ -284,3 +281,21 @@ jobs:
           echo "- Docker Hub Repo: https://hub.docker.com/r/chrisbromatello/wedding-site" >> $GITHUB_STEP_SUMMARY
           echo "- Latest Smoke Test: $SMOKE_STATUS" >> $GITHUB_STEP_SUMMARY
           echo "- Build ID (SHA): \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+
+
+  # 7. Hand-off to Harness for Helm Deployment (Webhook Trigger)
+  harness_deploy:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Trigger Harness Pipeline via Webhook
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d '{
+              "application": "Wedding_Project",
+              "services": ["Wedding_Site"],
+              "version": "'"${{ github.sha }}"'"
+            }' \
+            "${{ secrets.HARNESS_WEBHOOK_URL }}"

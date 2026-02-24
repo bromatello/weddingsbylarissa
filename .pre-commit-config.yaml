@@ -6,6 +6,7 @@ repos:
  #     - id: trailing-whitespace
  #     - id: end-of-file-fixer
       - id: check-yaml
+        exclude: wedding-site-chart/templates/
 
   # 2. Secret Detection (Gitleaks)
   - repo: https://github.com/gitleaks/gitleaks
