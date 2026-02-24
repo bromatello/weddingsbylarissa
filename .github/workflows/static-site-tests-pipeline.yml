@@ -34,8 +34,6 @@ jobs:
 
       - name: Push pipeline duration metric
         run: |
-          echo "URL=>>${{ secrets.PUSHGATEWAY_URL }}<<"
-          echo "RAW=>>${{ secrets.PUSHGATEWAY_URL }}<<"
           echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
           curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/precommit"
 
@@ -111,7 +109,6 @@ jobs:
       - name: Push pipeline duration metric
         run: |
           echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
-          echo "URL=>>${{ secrets.PUSHGATEWAY_URL }}<<"
           curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/quality_and_tests"
 
 
@@ -284,23 +281,21 @@ jobs:
           echo "- Docker Hub Repo: https://hub.docker.com/r/chrisbromatello/wedding-site" >> $GITHUB_STEP_SUMMARY
           echo "- Latest Smoke Test: $SMOKE_STATUS" >> $GITHUB_STEP_SUMMARY
           echo "- Build ID (SHA): \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-# 7. Hand-off to Harness for Helm Deployment
+
+
+  # 7. Hand-off to Harness for Helm Deployment (Webhook Trigger)
   harness_deploy:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    # Map the secrets to environment variables here
-    env:
-      ACC_ID: ${{ secrets.HARNESS_ACCOUNT_ID }}
-      API_KEY: ${{ secrets.HARNESS_API_KEY }}
     steps:
-      - name: Trigger Harness Pipeline
-        uses: fac/harness-deploy-action@646b107663f707f15456f9661582294191319760
-        with:
-          harness-account-id: ${{ env.ACC_ID }}
-          harness-org-id: default
-          harness-project-id: Wedding_Project
-          harness-pipeline-id: Wedding_Site_Deploy
-          harness-api-key: ${{ env.API_KEY }}
-          variables: |
-            image_tag=${{ github.sha }}
+      - name: Trigger Harness Pipeline via Webhook
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d '{
+              "application": "Wedding_Project",
+              "services": ["Wedding_Site"],
+              "version": "'"${{ github.sha }}"'"
+            }' \
+            "${{ secrets.HARNESS_WEBHOOK_URL }}"
