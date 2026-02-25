@@ -12,7 +12,7 @@ service:
   nodePort: 30080
 
 monitoring:
-  enabled: true
+  enabled: false
   releaseLabel: monitoring
 
 resources:

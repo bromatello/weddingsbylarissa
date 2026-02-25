@@ -12,17 +12,18 @@ spec:
       labels:
         app: wedding-site
     spec:
-      automountServiceAccountToken: false # Clears the first SonarQube issue
+      automountServiceAccountToken: false
       containers:
         - name: wedding-site
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
-          requests:
+            requests:
               memory: "128Mi"
               cpu: "100m"
-          limits:
+            limits:
               memory: "256Mi"
               cpu: "200m"
+
           ports:
             - containerPort: 5000
