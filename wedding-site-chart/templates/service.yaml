@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: "{{ .Release.Name }}-svc"
   labels:
-    app.kubernetes.io/name: prometheus-pushgateway
+    app.kubernetes.io/name: wedding-site
     release: {{ .Values.monitoring.releaseLabel }}
 spec:
   type: {{ .Values.service.type }}
