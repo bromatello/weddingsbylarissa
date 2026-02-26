@@ -1,0 +1,260 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "panels": [],
+      "title": "Level 1 - Pipeline Headline",
+      "type": "row"
+    },
+    {
+      "datasource": "BromProm",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "text": "Failed" }, "1": { "text": "Success" } }, "type": "value" }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
+      "id": 2,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        {
+          "expr": "max(ci_pipeline_status{pipeline=\"$pipeline\", env=\"$env\", exported_job=\"pipeline\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Overall Status",
+      "type": "stat"
+    },
+    {
+      "datasource": "BromProm",
+      "fieldConfig": {
+        "defaults": { "unit": "s" },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 1 },
+      "id": 3,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        {
+          "expr": "max(ci_pipeline_duration_seconds{pipeline=\"$pipeline\", env=\"$env\", exported_job=\"pipeline\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Total Duration",
+      "type": "stat"
+    },
+    {
+      "datasource": "BromProm",
+      "gridPos": { "h": 5, "w": 12, "x": 12, "y": 1 },
+      "id": 4,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "ci_pipeline_info{pipeline=\"$pipeline\", env=\"$env\", exported_job=\"pipeline\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "Pipeline Info",
+      "transformations": [
+        { "id": "labelsToFields", "options": {} },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "__name__": true, "instance": true, "job": true, "pipeline": true, "env": true },
+            "indexByName": { "branch": 0, "commit": 1, "triggered_by": 2 }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "id": 5,
+      "panels": [],
+      "title": "Level 2 - Stage Breakdown",
+      "type": "row"
+    },
+    {
+      "datasource": "BromProm",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 7 },
+      "id": 6,
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "expr": "max by (stage) (ci_pipeline_status{pipeline=\"$pipeline\", env=\"$env\", exported_job!~\"pipeline\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Stage Status",
+      "transformations": [
+        { "id": "labelsToFields", "options": {} }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "text": "Failed" }, "1": { "text": "Success" } }, "type": "value" }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "type": "table"
+    },
+    {
+      "datasource": "BromProm",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 7 },
+      "id": 7,
+      "options": { "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        {
+          "expr": "max by (stage) (ci_pipeline_duration_seconds{pipeline=\"$pipeline\", env=\"$env\", exported_job!~\"pipeline\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Stage Duration (s)",
+      "type": "bargauge"
+    },
+    {
+      "datasource": "BromProm",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 7 },
+      "id": 8,
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "expr": "ci_stage_info{pipeline=\"$pipeline\", env=\"$env\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "Stage Info (Logs & Artifacts)",
+      "transformations": [
+        { "id": "labelsToFields", "options": {} },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "__name__": true, "instance": true, "job": true, "pipeline": true, "env": true },
+            "indexByName": {
+              "stage": 0,
+              "log_url": 1,
+              "artifact": 2,
+              "change_summary": 3,
+              "commit": 4,
+              "branch": 5,
+              "triggered_by": 6
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "id": 9,
+      "panels": [],
+      "title": "Failures Only",
+      "type": "row"
+    },
+    {
+      "datasource": "BromProm",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 15 },
+      "id": 10,
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "expr": "max by (stage) (ci_pipeline_status{pipeline=\"$pipeline\", env=\"$env\", exported_job!~\"pipeline\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Failed Stages",
+      "transformations": [
+        { "id": "labelsToFields", "options": {} },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "fieldName": "Value",
+                "config": { "id": "number", "options": { "match": "lower", "value": 1 } }
+              }
+            ]
+          }
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["ci", "pipeline"],
+  "templating": {
+    "list": [
+      {
+        "name": "env",
+        "type": "query",
+        "datasource": "BromProm",
+        "query": "label_values(ci_pipeline_info, env)",
+        "includeAll": true,
+        "multi": true,
+        "refresh": 1,
+        "current": { "selected": true, "text": "local", "value": "local" }
+      },
+      {
+        "name": "pipeline",
+        "type": "query",
+        "datasource": "BromProm",
+        "query": "label_values(ci_pipeline_info, pipeline)",
+        "includeAll": false,
+        "multi": false,
+        "refresh": 1,
+        "current": { "selected": true, "text": "wedding-site", "value": "wedding-site" }
+      }
+    ]
+  },
+  "time": { "from": "now-12h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Wedding Site CI/CD Pipeline Dashboard",
+  "uid": "wedding-site-ci-cd-pipeline",
+  "version": 1
+}
