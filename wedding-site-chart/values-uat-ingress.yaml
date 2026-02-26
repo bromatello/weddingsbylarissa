@@ -1,0 +1,5 @@
+ingress:
+  enabled: true
+  host: uat-weddings.<your-domain>
+  className: ""
+  annotations: {}
