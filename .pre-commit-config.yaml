@@ -14,6 +14,16 @@ repos:
     hooks:
       - id: gitleaks
 
+# 3. Static Analysis (SonarCloud)
+  - repo: local
+    hooks:
+      - id: sonar-scanner
+        name: SonarScanner (SonarCloud)
+        entry: sonar-scanner
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
   # 3. Local Hooks (Your custom tests)
  # - repo: local
   #  hooks:
