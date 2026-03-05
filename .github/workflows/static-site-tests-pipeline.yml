@@ -41,7 +41,7 @@ jobs:
 
           
       # -----------------------------
-      # FIXED: Dynatrace event
+      # BROM FIXED: Dynatrace event
       # -----------------------------
       - name: Dynatrace event - precommit
         run: |
@@ -62,7 +62,7 @@ jobs:
             }"
 
       # -----------------------------
-      # FIXED: Dynatrace metric
+      # BROM FIXED: Dynatrace metric
       # -----------------------------
       - name: Dynatrace metric - precommit duration
         run: |
