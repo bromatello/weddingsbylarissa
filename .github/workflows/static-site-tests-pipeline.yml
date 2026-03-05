@@ -57,8 +57,7 @@ jobs:
                 \"duration_seconds\": \"${PIPELINE_DURATION_SECONDS}\",
                 \"commit\": \"${{ github.sha }}\",
                 \"branch\": \"${{ github.ref }}\"
-              },
-              \"entitySelector\": \"type(SERVICE),entityName.contains(\\\"wedding\\\")\"
+              }
             }"
 
       # -----------------------------
