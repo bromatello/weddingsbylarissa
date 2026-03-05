@@ -22,7 +22,8 @@ repos:
         entry: 'cmd /c "if "%SONAR_TOKEN%"=="" (echo SONAR_TOKEN is not set. Set it with: setx SONAR_TOKEN ^<token^> ^& exit /b 1) else sonar-scanner -Dsonar.token=%SONAR_TOKEN% -Dsonar.scanner.skipJreProvisioning=true -Dproject.settings=sonar-project.local.properties"'
         language: system
         pass_filenames: false
-#        stages: [pre-commit]
+        always_run: true
+        stages: [pre-commit]
 
   # 3. Local Hooks (Your custom tests)
  # - repo: local
