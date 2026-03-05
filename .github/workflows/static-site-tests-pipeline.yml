@@ -41,7 +41,7 @@ jobs:
 
           
       # -----------------------------
-      # NEW: Dynatrace event
+      # BROM FIXED: Dynatrace event
       # -----------------------------
       - name: Dynatrace event - precommit
         run: |
@@ -58,19 +58,19 @@ jobs:
                 \"commit\": \"${{ github.sha }}\",
                 \"branch\": \"${{ github.ref }}\"
               },
-              \"entitySelector\": \"type(KUBERNETES_WORKLOAD),entityName.contains(\\\"wedding-site\\\")\"
+              \"entitySelector\": \"type(SERVICE),name.contains(\\\"wedding\\\")\"
             }"
 
       # -----------------------------
-      # NEW: Dynatrace metric
+      # BROM FIXED: Dynatrace metric
       # -----------------------------
       - name: Dynatrace metric - precommit duration
         run: |
           curl -X POST \
             "${{ secrets.DT_URL }}/api/v2/metrics/ingest" \
             -H "Authorization: Api-Token ${{ secrets.DT_API_TOKEN }}" \
+            -H "Content-Type: text/plain" \
             --data-raw "pipeline.duration,stage=precommit ${PIPELINE_DURATION_SECONDS}"
-
 
   # 1. Security Scanning (SAST)
   security:
