@@ -18,24 +18,47 @@
         .container {
             max-width: 1024px;
             margin: 0 auto;
-            /* Centers the page */
             display: flex;
             flex-wrap: wrap;
-            /* Allows columns to drop down on mobile */
             gap: 20px;
-            /* Space between columns */
         }
 
         /* The individual columns */
         .column {
             flex: 1;
-            /* Distributes space equally */
             min-width: 300px;
-            /* Ensures they don't get too thin before wrapping */
             background: white;
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Hover effect for location cards ONLY */
+        .column:hover:not(.no-hover) {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Hero and Intro specific styling */
+        .hero-column {
+            flex: 100%; /* Spans full width of container */
+            height: 400px;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .intro-column {
+            flex: 100%;
+            margin-top: -20px; /* Pulls it up to meet the image */
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+            padding: 30px; /* Creates the margins around the text */
+            box-sizing: border-box;
+            color: #444;
+            line-height: 1.8;
+            font-size: 1.1rem;
+            text-align: center;
         }
 
         /* Image styling */
@@ -43,8 +66,11 @@
             width: 100%;
             height: 200px;
             object-fit: cover;
-            /* Keeps images from stretching */
             display: block;
+        }
+
+        .hero-column img {
+            height: 100%;
         }
 
         /* Text panel styling */
@@ -66,33 +92,20 @@
         @media (max-width: 768px) {
             .column {
                 flex: 100%;
-                /* Forces each column to take full width on mobile */
             }
-        }
-
-        .column {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .column:hover {
-            transform: translateY(-10px);
-            /* Lifts the card up */
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            /* Deepens the shadow */
+            .hero-column {
+                height: 250px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="column" style="margin-bottom: 50px;height: 400px;">
-            <img src="Content/Images/central-park/central-park-weddings.jpg" alt="Central Park Weddings"
-                style="width: 100%; height: 100%; object-fit: cover; display: block;">
+    <div class="container" style="margin-bottom: 40px;">
+        <div class="column hero-column no-hover">
+            <img src="Content/Images/central-park/central-park-weddings.jpg" alt="Central Park Weddings">
         </div>
-    </div>
-
-    <div class="container">
-        <div class="column" style="margin-bottom: 50px;height: 100px;">
+        <div class="column intro-column no-hover">
             There is something magical about getting married in Central Park. It can be a lot more affordable and it is
             the best location in New York City if you are eloping! There are multiple locations to choose from. From Bow
             Bridge to Bethesda Castle, each spot looks like a rom-com set! There are wooden structures, cast iron
@@ -134,13 +147,13 @@
                     cheering from spectators on the bridge when you have that first kiss! Permit Required.</p>
             </div>
         </div>
+
         <div class="column">
             <img src="Content/Images/central-park/central-park-weddings.jpg" alt="Bow Bridge Landing">
             <div class="text-panel">
                 <h3>Bow Bridge Landing (Max 5-10 ppl)</h3>
                 <p>A small wooden structure on the lake with the Bow Bridge as a stunning backdrop. Suitable for very
-                    small elopements. No permit required.
-
+                    small elopements. No permit required.</p>
             </div>
         </div>
 
@@ -159,11 +172,8 @@
             <div class="text-panel">
                 <h3>Wagner Cove (Max 10-15 ppl)</h3>
                 <p>Heading East from Central Park West and 72nd, Wagner Cove is one of my favorite locations in the
-                    Park.
-
-                    It is a hidden gem. It is a wooden structure tucked away in the corner of the lake. It provides
-                    shade and its small size is incredibly romantic. Permit required.
-                </p>
+                    Park. It is a hidden gem. It is a wooden structure tucked away in the corner of the lake. It provides
+                    shade and its small size is incredibly romantic. Permit required.</p>
             </div>
         </div>
 
@@ -176,6 +186,7 @@
                     with the Bridge as a stunning backdrop or stunning New York City skyline views. Permit required.</p>
             </div>
         </div>
+
         <div class="column">
             <img src="Content/Images/central-park/copcot.jpeg" alt="Cop Cot">
             <div class="text-panel">
@@ -183,10 +194,10 @@
                 <p>Located near 59th and 6th Avenue, Cop Cot is the perfect wedding venue if you have a larger crowd for
                     your wedding. It is situated on top of a small hill (bear in mind for certain guests), It features a
                     large wooden gazebo with built-in bench seating. It offers a private, intimate atmosphere with
-                    beautiful, natural, and urban, year-round scenery. Permit required.
-                </p>
+                    beautiful, natural, and urban, year-round scenery. Permit required.</p>
             </div>
         </div>
+
         <div class="column">
             <img src="Content/Images/central-park/treehouse.jpeg" alt="Treehouse for Dreaming">
             <div class="text-panel">
@@ -198,6 +209,7 @@
                     walking difficulties. No permit required but suggest guests arrive early to seclude the spot.</p>
             </div>
         </div>
+    </div>
 </body>
 
 </html>
