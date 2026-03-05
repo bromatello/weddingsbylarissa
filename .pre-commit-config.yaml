@@ -14,6 +14,21 @@ repos:
     hooks:
       - id: gitleaks
 
+# 3. Static Analysis (SonarCloud)
+  - repo: local
+    hooks:
+      - id: sonar-scanner
+        name: SonarScanner (SonarCloud)
+        entry: powershell
+        args:
+          - -NoProfile
+          - -Command
+          - "$token = $env:SONAR_TOKEN; if (-not $token) { $token = [Environment]::GetEnvironmentVariable('SONAR_TOKEN','User') }; if (-not $token) { Write-Error 'SONAR_TOKEN is not set (process or user env).'; exit 1 }; sonar-scanner --define sonar.token=$token --define sonar.scanner.skipJreProvisioning=true --define project.settings=sonar-project.local.properties"
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
   # 3. Local Hooks (Your custom tests)
  # - repo: local
   #  hooks:

@@ -11,9 +11,16 @@ service:
   targetPort: 5000
   nodePort: 30080
 
+ingress:
+  enabled: false
+  host: ""
+  className: ""
+  annotations: {}
+
 monitoring:
   enabled: true
   releaseLabel: monitoring
+  namespace: monitoring
 
 resources:
   limits:

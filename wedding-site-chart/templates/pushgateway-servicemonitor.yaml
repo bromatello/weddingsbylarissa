@@ -1,16 +1,18 @@
+{{- if .Values.monitoring.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: pushgateway
   labels:
-    release: monitoring
+    release: {{ .Values.monitoring.releaseLabel }}
 spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: prometheus-pushgateway
   namespaceSelector:
     matchNames:
-      - default
+      - {{ .Values.monitoring.namespace }}
   endpoints:
     - port: http
       interval: 15s
+{{- end }}
