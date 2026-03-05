@@ -82,7 +82,7 @@ jobs:
           curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/security"
 
 
-  # 2. Quality and Performance
+  # 2. Quality, Tests, and Sonar (Consolidated for Coverage)
   quality_and_tests:
     runs-on: ubuntu-latest
     steps:
@@ -91,40 +91,17 @@ jobs:
         run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
 
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for SonarCloud
 
-      - name: Run Unit Tests
+      - name: Install and Test
         run: |
           npm install --ignore-scripts
-          npm test || echo "No tests defined yet"
+          npm test -- --coverage || echo "No tests defined yet"
 
       - name: Check Image Sizes
         run: |
           find . -path ./node_modules -prune -o -type f \( -name "*.jpg" -o -name "*.png" \) -size +8M -print | grep . && exit 1 || echo "Images OK"
-
-      - name: End timer and calculate duration
-        id: end
-        run: |
-          END_TIME=$(date +%s)
-          DURATION=$((END_TIME - START_TIME))
-          echo "PIPELINE_DURATION_SECONDS=$DURATION" >> $GITHUB_ENV
-
-      - name: Push pipeline duration metric
-        run: |
-          echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
-          curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/quality_and_tests"
-
-
-  # 3. SonarCloud Analysis
-  sonarcloud:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Start timer
-        id: start
-        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
-
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
@@ -142,10 +119,10 @@ jobs:
       - name: Push pipeline duration metric
         run: |
           echo "pipeline_duration_seconds ${PIPELINE_DURATION_SECONDS}" | \
-          curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/sonarcloud"
+          curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/quality_and_sonar"
 
 
-  # 4. Docker Image Security - The Scout Scan
+  # 3. Docker Image Security - The Scout Scan
   docker_scout:
     runs-on: ubuntu-latest
     permissions:
@@ -188,9 +165,9 @@ jobs:
           curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/docker_scout"
 
 
-  # 5. Deploy (Gatekeeper)
+  # 4. Deploy (Gatekeeper)
   deploy:
-    needs: [precommit, security, quality_and_tests, sonarcloud, docker_scout]
+    needs: [precommit, security, quality_and_tests, docker_scout]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     permissions:
@@ -232,7 +209,7 @@ jobs:
           curl --data-binary @- "${{ secrets.PUSHGATEWAY_URL }}/metrics/job/deploy"
 
 
-  # 6. Post-Deploy Smoke Test
+  # 5. Post-Deploy Smoke Test
   smoke_test:
     needs: [deploy]
     runs-on: ubuntu-latest
@@ -285,7 +262,7 @@ jobs:
           echo "- Build ID (SHA): \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
 
 
-  # 7. Hand-off to Harness for Helm Deployment (Webhook Trigger)
+  # 6. Hand-off to Harness for Helm Deployment (Webhook Trigger)
   harness_deploy:
     needs: [smoke_test]
     runs-on: ubuntu-latest
