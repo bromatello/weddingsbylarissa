@@ -112,10 +112,15 @@ jobs:
           npm test -- --coverage || echo "No tests defined yet"
 
       - name: SonarCloud Scan
+        if: ${{ github.event_name != 'pull_request' || !contains(join(github.event.pull_request.labels.*.name, ','), 'skip-sonar') }}
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           SONAR_TOKEN: "${{ secrets.SONAR_TOKEN }}"
+
+      - name: SonarCloud Scan skipped
+        if: ${{ github.event_name == 'pull_request' && contains(join(github.event.pull_request.labels.*.name, ','), 'skip-sonar') }}
+        run: echo "Skipping SonarCloud scan because PR has label 'skip-sonar'."
 
       - name: End timer and Telemetry
         if: always()

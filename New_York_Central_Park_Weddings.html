@@ -5,12 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Central Park Weddings</title>
+    <link rel="stylesheet" href=".\Content\CSS\WeddingsByLarissa.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Dancing+Script|Quicksand|Raleway">
+    <link rel="stylesheet" href=".\Content\CSS\font.css">
     <style>
         /* Basic reset */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 70px 20px 20px;
             background-color: #f4f4f4;
         }
 
@@ -101,6 +105,38 @@
 </head>
 
 <body>
+    <!-- Navbar (sit on top) -->
+    <div class="w3-top" style="background-color:white;height:50px;">
+        <div class="w3-bar" id="myNavbar" style="background-color:white;height:50px;">
+            <a class="w3-bar-item w3-button w3-hover-black w3-hide-medium w3-hide-large w3-right" href="javascript:void(0);" onclick="toggleFunction()" title="Menu">
+                <i class="fa fa-bars"></i>
+            </a>
+
+            <a href="index.html#home" class="w3-bar-item w3-button w3-hover-white" style="width:200px;"><!--<img src=".\Content\Images\Wedding-Celebrant-Logo.jpg" style="height:50px;" />--></a>
+            <a href="index.html#about" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-user"></i> Welcome</a>
+            <a href="index.html#portfolio" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-th"></i> Weddings</a>
+            <a href="index.html#contact" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-envelope"></i> Contact</a>
+            <a href="New_York_Wedding_Gallery.html" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-envelope"></i> Gallery</a>
+            <a href="New_York_Central_Park_Weddings.html" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-envelope"></i> Central Park</a>
+            <a href="New_York_Gay_Pride_Weddings.html" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-envelope"></i> Pride</a>
+            <a href="New_York_Celebrant_Popular_Questions.html" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-envelope"></i> FAQs</a>
+            <a href="#" class="w3-bar-item w3-button w3-hide-small w3-right w3-hover-white">                <i class="fa fa-search"></i>            </a>
+            <div class="w3-bar-item w3-button w3-hide-small" style="margin-left:30px;">+1 (917) 607-3147</div>
+            <div class="w3-bar-item w3-button w3-hide-small"> LARISSA@WEDDINGSBYLARISSA.COM</div>
+        </div>
+
+        <!-- Navbar on small screens -->
+        <div id="navDemo" class="w3-bar-block w3-white w3-hide w3-hide-large w3-hide-medium">
+            <a href="index.html#about" class="w3-bar-item w3-button" onclick="toggleFunction()">Welcome</a>
+            <a href="index.html#portfolio" class="w3-bar-item w3-button" onclick="toggleFunction()">Weddings</a>
+            <a href="New_York_Wedding_Gallery.html" class="w3-bar-item w3-button"><i class="fa fa-envelope"></i> Gallery</a>
+            <a href="New_York_Central_Park_Weddings.html" class="w3-bar-item w3-button"><i class="fa fa-envelope"></i> Central Park Pride</a>
+            <a href="index.html#contact" class="w3-bar-item w3-button" onclick="toggleFunction()">Contact</a>
+            <a href="New_York_Celebrant_Popular_Questions.html" class="w3-bar-item w3-button" onclick="toggleFunction()">FAQ</a>
+
+        </div>
+    </div>
+
     <div class="container" style="margin-bottom: 40px;">
         <div class="column hero-column no-hover">
             <img src="Content/Images/central-park/central-park-weddings.jpg" alt="Central Park Weddings">
@@ -127,7 +163,7 @@
         </div>
 
         <div class="column">
-            <img src="Content/Images/central-park/central-park-weddings.jpg" alt="Belvedere Castle">
+            <img src="Content/Images/central-park/BelvedereCastle.jpg" alt="Belvedere Castle">
             <div class="text-panel">
                 <h3>Belvedere Castle (Max 20-25 ppl)</h3>
                 <p>Above Shakespeare Gardens sits the iconic Belvedere Castle. If you want a romantic castle type
@@ -149,7 +185,7 @@
         </div>
 
         <div class="column">
-            <img src="Content/Images/central-park/central-park-weddings.jpg" alt="Bow Bridge Landing">
+            <img src="Content/Images/central-park/BowBridegegirls.jpg" alt="Bow Bridge Landing">
             <div class="text-panel">
                 <h3>Bow Bridge Landing (Max 5-10 ppl)</h3>
                 <p>A small wooden structure on the lake with the Bow Bridge as a stunning backdrop. Suitable for very
@@ -158,7 +194,7 @@
         </div>
 
         <div class="column">
-            <img src="Content/Images/central-park/shakespearegarden.jpeg" alt="Shakespeare Garden">
+            <img src="Content/Images/central-park/ShakespeareGarden3.jpg" alt="Shakespeare Garden">
             <div class="text-panel">
                 <h3>Shakespeare Garden (Max 20-25 ppl)</h3>
                 <p>Heading in from the West side, near the Museum of Natural History, Shakespeare Gardens is a beautiful
@@ -210,6 +246,17 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function toggleFunction() {
+            var x = document.getElementById("navDemo");
+            if (x.className.indexOf("w3-show") == -1) {
+                x.className += " w3-show";
+            } else {
+                x.className = x.className.replace(" w3-show", "");
+            }
+        }
+    </script>
 </body>
 
 </html>
