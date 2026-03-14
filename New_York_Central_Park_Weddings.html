@@ -27,6 +27,11 @@
             gap: 20px;
         }
 
+        .container.two-across .column {
+            flex: 0 0 calc(50% - 10px);
+            max-width: calc(50% - 10px);
+        }
+
         /* The individual columns */
         .column {
             flex: 1;
@@ -87,6 +92,12 @@
             color: #333;
         }
 
+        .text-panel h3 .h3-meta {
+            font-size: 0.75em;
+            display: block;
+            margin-top: 2px;
+        }
+
         .text-panel p {
             color: #666;
             line-height: 1.5;
@@ -113,6 +124,12 @@
             .column {
                 flex: 100%;
             }
+
+            .container.two-across .column {
+                flex: 100%;
+                max-width: 100%;
+            }
+
             .hero-column {
                 height: 250px;
             }
@@ -170,7 +187,7 @@
         <div class="column">
             <img src="Content/Images/central-park/ladiespavilion.jpg" alt="Ladies Pavilion">
             <div class="text-panel">
-                <h3>Ladies Pavilion (Max 20-25 ppl)</h3>
+                <h3>Ladies Pavilion <span class="h3-meta">(Max 20-25 ppl)</span></h3>
                 <p>Located at Hernshead on the western shore of The Lake in Central Park at West 75th Street, The Ladies
                     Pavilion is an ornate, Victorian-style cast-iron shelter. Designed by Jacob Wrey Mould in 1871, it
                     features a slate roof and decorative ironwork. It is a highly popular, romantic spot for intimate
@@ -181,7 +198,7 @@
         <div class="column">
             <img src="Content/Images/central-park/BelvedereCastle.jpg" alt="Belvedere Castle">
             <div class="text-panel">
-                <h3>Belvedere Castle (Max 20-25 ppl)</h3>
+                <h3>Belvedere Castle <span class="h3-meta">(Max 20-25 ppl)</span></h3>
                 <p>Above Shakespeare Gardens sits the iconic Belvedere Castle. If you want a romantic castle type
                     structure then Belvedere Castle is the perfect spot! You can exchange vows on the castle’s balcony
                     overlooking the Manhattan Skyline. It is a busy tourist spot so maybe not the location if you want
@@ -192,7 +209,7 @@
         <div class="column">
             <img src="Content/Images/central-park/bowbridge.jpg" alt="Bow Bridge ">
             <div class="text-panel">
-                <h3>Bow Bridge (Max 10-15ppl)</h3>
+                <h3>Bow Bridge <span class="h3-meta">(Max 10-15ppl)</span></h3>
                 <p>A short walk from Bethesda Terrance, the Bow Bridge is an iconic location for weddings, or even just
                     photos with the Upper West Side behind you. You can get married on the bridge, however I recommend a
                     landing to the West of it. Permits not required so first come first served. Be prepared for lots of
@@ -203,7 +220,7 @@
         <div class="column">
             <img src="Content/Images/central-park/BowBridegegirls.jpg" alt="Bow Bridge Landing">
             <div class="text-panel">
-                <h3>Bow Bridge Landing (Max 5-10 ppl)</h3>
+                <h3>Bow Bridge Landing <span class="h3-meta">(Max 5-10 ppl)</span></h3>
                 <p>A small wooden structure on the lake with the Bow Bridge as a stunning backdrop. Suitable for very
                     small elopements. No permit required.</p>
             </div>
@@ -212,7 +229,7 @@
         <div class="column">
             <img src="Content/Images/central-park/ShakespeareGarden3.jpg" alt="Shakespeare Garden">
             <div class="text-panel">
-                <h3>Shakespeare Garden (Max 20-25 ppl)</h3>
+                <h3>Shakespeare Garden <span class="h3-meta">(Max 20-25 ppl)</span></h3>
                 <p>Heading in from the West side, near the Museum of Natural History, Shakespeare Gardens is a beautiful
                     themed garden that changes with each season. It sits on four acres on a steep incline so bear that
                     in mind for certain guests. Above it is the Beautiful Belvedere Castle. Permit required.</p>
@@ -222,7 +239,7 @@
         <div class="column">
             <img src="Content/Images/central-park/wagnercove.jpg" alt="Wagner Cove">
             <div class="text-panel">
-                <h3>Wagner Cove (Max 10-15 ppl)</h3>
+                <h3>Wagner Cove <span class="h3-meta">(Max 10-15 ppl)</span></h3>
                 <p>Heading East from Central Park West and 72nd, Wagner Cove is one of my favorite locations in the
                     Park. It is a hidden gem. It is a wooden structure tucked away in the corner of the lake. It provides
                     shade and its small size is incredibly romantic. Permit required.</p>
@@ -232,7 +249,7 @@
         <div class="column">
             <img src="Content/Images/central-park/gapstow.jpeg" alt="Gapstow Bridge ">
             <div class="text-panel">
-                <h3>Gapstow Bridge (Max 10-15ppl) </h3>
+                <h3>Gapstow Bridge <span class="h3-meta">(Max 10-15ppl)</span></h3>
                 <p>At the north east end of the pond lies another iconic bridge made in 1896 from local stone in the
                     heart of the Park. Similarly to Bow Bridge it is a heavily populated bridge but you can get married
                     with the Bridge as a stunning backdrop or stunning New York City skyline views. Permit required.</p>
@@ -242,7 +259,7 @@
         <div class="column">
             <img src="Content/Images/central-park/copcot.jpeg" alt="Cop Cot">
             <div class="text-panel">
-                <h3>Cop Cot (Max 50 ppl)</h3>
+                <h3>Cop Cot <span class="h3-meta">(Max 50 ppl)</span></h3>
                 <p>Located near 59th and 6th Avenue, Cop Cot is the perfect wedding venue if you have a larger crowd for
                     your wedding. It is situated on top of a small hill (bear in mind for certain guests), It features a
                     large wooden gazebo with built-in bench seating. It offers a private, intimate atmosphere with
@@ -253,12 +270,58 @@
         <div class="column">
             <img src="Content/Images/central-park/treehouse.jpeg" alt="Treehouse for Dreaming">
             <div class="text-panel">
-                <h3>Treehouse for Dreaming (Max 20-25 ppl)</h3>
+                <h3>Treehouse for Dreaming <span class="h3-meta">(Max 20-25 ppl)</span></h3>
                 <p>Located between 67 and 68th street and Fifth avenue is the Treehouse for Dreaming (also known as the
                     Dene Summerhouse). Treehouse for Dreaming is another spot that is a beautiful vine covered gazebo
                     with a natural, boho type atmosphere. It is secluded and offers beautiful views. Similarly to Cop
                     Cot, the Treehouse offers bench seating for guests, however it is not suitable for guests with
                     walking difficulties. No permit required but suggest guests arrive early to seclude the spot.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container two-across" style="margin-top: 20px;">
+        <div class="column">
+            <img src="Content/Images/central-park/spring.jpg" alt="Spring">
+            <div class="text-panel">
+                <h3>SPRING</h3>
+                <p>Above Shakespeare Gardens sits the iconic Belvedere Castle. If you want a romantic castle type
+                    structure then Belvedere Castle is the perfect spot! You can exchange vows on the castle’s balcony
+                    overlooking the Manhattan Skyline. It is a busy tourist spot so maybe not the location if you want
+                    complete privacy! Permit required.</p>
+            </div>
+        </div>
+
+        <div class="column">
+            <img src="Content/Images/central-park/summer.jpg" alt="Summer">
+            <div class="text-panel">
+                <h3>SUMMER</h3>
+                <p>Above Shakespeare Gardens sits the iconic Belvedere Castle. If you want a romantic castle type
+                    structure then Belvedere Castle is the perfect spot! You can exchange vows on the castle’s balcony
+                    overlooking the Manhattan Skyline. It is a busy tourist spot so maybe not the location if you want
+                    complete privacy! Permit required.</p>
+            </div>
+        </div>
+
+        <div class="column">
+            <img src="Content/Images/central-park/fall.jpg" alt="Fall">
+            <div class="text-panel">
+                <h3>FALL</span></h3>
+                <p>Above Shakespeare Gardens sits the iconic Belvedere Castle. If you want a romantic castle type
+                    structure then Belvedere Castle is the perfect spot! You can exchange vows on the castle’s balcony
+                    overlooking the Manhattan Skyline. It is a busy tourist spot so maybe not the location if you want
+                    complete privacy! Permit required.</p>
+            </div>
+        </div>
+
+        <div class="column">
+            <img src="Content/Images/central-park/winter.jpg" alt="Winter">
+            <div class="text-panel">
+                <h3>WINTER</h3>
+                <p>Above Shakespeare Gardens sits the iconic Belvedere Castle. If you want a romantic castle type
+                    structure then Belvedere Castle is the perfect spot! You can exchange vows on the castle’s balcony
+                    overlooking the Manhattan Skyline. It is a busy tourist spot so maybe not the location if you want
+                    complete privacy! Permit required.</p>
             </div>
         </div>
     </div>
