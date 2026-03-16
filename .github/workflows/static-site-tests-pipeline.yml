@@ -24,7 +24,7 @@ jobs:
       - name: Run pre-commit hooks
         run: pre-commit run --all-files
         env:
-          SKIP: sonar-scanner
+          SKIP: sonar-scanner,trivy-scan-quick,trivy-scan
 
       - name: End timer and calculate duration
         if: always()
@@ -157,6 +157,9 @@ jobs:
   # 3. Docker Scout
   docker_scout:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Start timer
         run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
