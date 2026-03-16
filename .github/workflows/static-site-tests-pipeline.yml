@@ -157,6 +157,9 @@ jobs:
   # 3. Docker Scout
   docker_scout:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Start timer
         run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
