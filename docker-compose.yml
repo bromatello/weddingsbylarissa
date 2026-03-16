@@ -1,21 +1,11 @@
-
-
 services:
   web-node:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: weddings-by-larissa
     image: weddingsbylarissa:v1.0.2
     environment:
       - PORT=5000
     ports:
       - "8080:5000"
-    volumes:
-      - .:/usr/src/app:ro
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:5000/"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
+    restart: always

@@ -1,28 +1,21 @@
-# Node-based Dockerfile to serve the static site using the 'serve' package
-# - Uses a lightweight Node Alpine image
-# - Installs runtime dependencies and runs `npm start` which uses `serve`
-
 FROM node:22-alpine
 
 WORKDIR /usr/src/app
 
-# Install a tiny utility for healthcheck and then install production deps
-RUN apk add --no-cache wget
+# Copy manifests first for better caching
+COPY package*.json ./
 
-# Copy package manifest and install production dependencies
-COPY package.json ./
-RUN npm install --production --no-audit --no-fund --ignore-scripts
+# Install only production deps, reproducibly
+RUN npm ci --only=production --ignore-scripts
 
-# Copy site files
+# Copy the rest of the app
 COPY . .
 
-# Run as non-root for safety
-RUN chown -R node:node /usr/src/app
+# Drop privileges
 USER node
 
 EXPOSE 5000
 
-# Basic healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD wget -qO- http://localhost:5000/ >/dev/null || exit 1
 

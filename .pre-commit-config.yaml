@@ -29,6 +29,135 @@ repos:
         always_run: true
         stages: [pre-commit]
 
+  - repo: local
+    hooks:
+      # Trivy scanning modes:
+      # - trivy-scan-quick: runs on pre-commit for fast feedback (only when dependency files are staged)
+      # - trivy-scan: full repository scan for first-time/manual verification (`pre-commit run trivy-scan --all-files -v`)
+      - id: trivy-scan-quick
+        name: Trivy Vulnerability Scan (Quick)
+        entry: powershell
+        args:
+          - -NoProfile
+          - -Command
+          - |
+            if ($env:CI -eq 'true') {
+              Write-Host 'Skipping quick Trivy scan in CI.'
+              exit 0
+            }
+
+            $dependencyPattern = '^(package-lock\.json|package\.json|requirements\.txt|pyproject\.toml|Pipfile\.lock|go\.mod|go\.sum|pom\.xml|build\.gradle|Cargo\.toml|Cargo\.lock)$'
+            $changedFiles = git diff --cached --name-only
+            $changedDependencyFiles = $changedFiles | Where-Object { $_ -match $dependencyPattern }
+
+            if (-not $changedDependencyFiles) {
+              Write-Host 'No dependency files changed. Skipping quick Trivy scan.'
+              exit 0
+            }
+
+            $trivyCmd = (Get-Command trivy -ErrorAction SilentlyContinue).Source
+            if ([string]::IsNullOrWhiteSpace($trivyCmd)) {
+              $trivyFallback = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\AquaSecurity.Trivy_Microsoft.Winget.Source_8wekyb3d8bbwe\trivy.exe'
+              if (Test-Path $trivyFallback) {
+                $trivyCmd = $trivyFallback
+              }
+            }
+
+            if ([string]::IsNullOrWhiteSpace($trivyCmd)) {
+              Write-Error 'Trivy is not installed or not discoverable. Install with: winget install --id AquaSecurity.Trivy -e'
+              exit 1
+            }
+
+            Write-Host 'Running quick Trivy vulnerability scan...'
+            & $trivyCmd fs --scanners vuln --vuln-type library --severity HIGH,CRITICAL --skip-dirs .git --skip-dirs node_modules --skip-dirs coverage --exit-code 1 --no-progress .
+
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: trivy-scan
+        name: Trivy Vulnerability Scan (Full)
+        entry: powershell
+        args:
+          - -NoProfile
+          - -Command
+          - |
+            $trivyCmd = (Get-Command trivy -ErrorAction SilentlyContinue).Source
+            if ([string]::IsNullOrWhiteSpace($trivyCmd)) {
+              $trivyFallback = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\AquaSecurity.Trivy_Microsoft.Winget.Source_8wekyb3d8bbwe\trivy.exe'
+              if (Test-Path $trivyFallback) {
+                $trivyCmd = $trivyFallback
+              }
+            }
+
+            if ([string]::IsNullOrWhiteSpace($trivyCmd)) {
+              Write-Error 'Trivy is not installed or not discoverable. Install with: winget install --id AquaSecurity.Trivy -e'
+              exit 1
+            }
+
+            Write-Host 'Running full Trivy vulnerability scan...'
+            & $trivyCmd fs --scanners vuln --vuln-type library --severity HIGH,CRITICAL --skip-dirs .git --skip-dirs node_modules --skip-dirs coverage --exit-code 1 --no-progress .
+
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [manual]
+
+  # - repo: local
+  #   hooks:
+  #     - id: nexus-iq-scan
+  #       name: Nexus IQ Policy Evaluation
+  #       entry: powershell
+  #       args:
+  #         - -NoProfile
+  #         - -Command
+  #         - |
+  #           if ($env:CI -eq 'true') {
+  #             Write-Host 'Skipping Nexus IQ scan in CI.'
+  #             exit 0
+  #           }
+
+  #           $dependencyPattern = '^(package-lock\.json|package\.json|requirements\.txt|pyproject\.toml|Pipfile\.lock|go\.mod|go\.sum|pom\.xml|build\.gradle|Cargo\.toml|Cargo\.lock)$'
+  #           $changedFiles = git diff --cached --name-only
+  #           $changedDependencyFiles = $changedFiles | Where-Object { $_ -match $dependencyPattern }
+
+  #           if (-not $changedDependencyFiles) {
+  #             Write-Host 'No dependency files changed. Skipping Nexus IQ scan.'
+  #             exit 0
+  #           }
+
+  #           $iqUsername = $env:IQ_USERNAME
+  #           if ([string]::IsNullOrWhiteSpace($iqUsername)) { $iqUsername = [Environment]::GetEnvironmentVariable('IQ_USERNAME', 'User') }
+
+  #           $iqPassword = $env:IQ_PASSWORD
+  #           if ([string]::IsNullOrWhiteSpace($iqPassword)) { $iqPassword = [Environment]::GetEnvironmentVariable('IQ_PASSWORD', 'User') }
+
+  #           $iqServerUrl = $env:IQ_SERVER_URL
+  #           if ([string]::IsNullOrWhiteSpace($iqServerUrl)) { $iqServerUrl = [Environment]::GetEnvironmentVariable('IQ_SERVER_URL', 'User') }
+
+  #           $iqAppId = $env:IQ_APP_ID
+  #           if ([string]::IsNullOrWhiteSpace($iqAppId)) { $iqAppId = [Environment]::GetEnvironmentVariable('IQ_APP_ID', 'User') }
+
+  #           if ([string]::IsNullOrWhiteSpace($iqUsername) -or
+  #               [string]::IsNullOrWhiteSpace($iqPassword) -or
+  #               [string]::IsNullOrWhiteSpace($iqServerUrl) -or
+  #               [string]::IsNullOrWhiteSpace($iqAppId)) {
+  #             Write-Error 'Missing IQ environment variables: IQ_USERNAME, IQ_PASSWORD, IQ_SERVER_URL, IQ_APP_ID'
+  #             exit 1
+  #           }
+
+  #           & 'tools/nexus-iq-cli/nexus-iq-cli.cmd' `
+  #             -i "$iqAppId" `
+  #             -s "$iqServerUrl" `
+  #             -a "$iqUsername:$iqPassword" `
+  #             .
+
+  #       language: system
+  #       pass_filenames: false
+  #       always_run: true
+  #       stages: [pre-commit]
+
   # 3. Local Hooks (Your custom tests)
  # - repo: local
   #  hooks:
