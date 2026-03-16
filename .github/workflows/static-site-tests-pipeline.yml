@@ -24,7 +24,7 @@ jobs:
       - name: Run pre-commit hooks
         run: pre-commit run --all-files
         env:
-          SKIP: sonar-scanner
+          SKIP: sonar-scanner,trivy-scan-quick,trivy-scan
 
       - name: End timer and calculate duration
         if: always()

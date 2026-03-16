@@ -32,7 +32,7 @@ repos:
   - repo: local
     hooks:
       # Trivy scanning modes:
-      # - trivy-scan-quick: runs on pre-commit for fast feedback (only when dependency files are staged)
+      # - trivy-scan-quick: local pre-commit quick scan
       # - trivy-scan: full repository scan for first-time/manual verification (`pre-commit run trivy-scan --all-files -v`)
       - id: trivy-scan-quick
         name: Trivy Vulnerability Scan (Quick)
