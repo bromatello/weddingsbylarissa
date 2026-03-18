@@ -9,8 +9,30 @@ on:
     types: [opened, synchronize, labeled, unlabeled]
 
 jobs:
-  # 0. Pre-commit checks
+  # 1. Setup Job: Generate the IDs once for the entire workflow
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      traceparent: ${{ steps.trace.outputs.traceparent }}
+      trace_id: ${{ steps.trace.outputs.trace_id }}
+    steps:
+      - name: Generate Trace Context
+        id: trace
+        run: |
+          TRACE_ID=$(openssl rand -hex 16)
+          SPAN_ID=$(openssl rand -hex 8)
+          echo "traceparent=00-${TRACE_ID}-${SPAN_ID}-01" >> $GITHUB_OUTPUT
+          echo "trace_id=${TRACE_ID}" >> $GITHUB_OUTPUT
+
+      - name: Debug IDs (Setup)
+        run: |
+          echo "--- INITIAL ID GENERATION ---"
+          echo "Trace ID: ${{ steps.trace.outputs.trace_id }}"
+          echo "GitHub Run ID: ${{ github.run_id }}"
+
+  # 2. Pre-commit checks
   precommit:
+    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Start timer
@@ -26,20 +48,18 @@ jobs:
         env:
           SKIP: sonar-scanner,trivy-scan-quick,trivy-scan
 
-      - name: End timer and calculate duration
+      - name: End timer and Telemetry
         if: always()
         run: |
           DURATION=$(( $(date +%s) - START_TIME ))
-          echo "PIPELINE_DURATION_SECONDS=$DURATION" >> $GITHUB_ENV
-
-      - name: Dynatrace Telemetry - Precommit
-        if: always()
-        run: |
+          # Metric Ingest
           curl -X POST "${{ secrets.DT_URL }}/api/v2/metrics/ingest" \
             -H "Authorization: Api-Token ${{ secrets.DT_API_TOKEN }}" \
             -H "Content-Type: text/plain" \
-            --data-raw "pipeline.stage.duration,stage=precommit,status=${{ job.status }} ${PIPELINE_DURATION_SECONDS}"
+            -H "traceparent: ${{ needs.setup.outputs.traceparent }}" \
+            --data-raw "pipeline.stage.duration,stage=precommit,status=${{ job.status }},pipeline_id=${{ github.run_id }},dt.trace_id=${{ needs.setup.outputs.trace_id }} $DURATION"
           
+          # Event Ingest
           curl -X POST "${{ secrets.DT_URL }}/api/v2/events/ingest" \
             -H "Authorization: Api-Token ${{ secrets.DT_API_TOKEN }}" \
             -H "Content-Type: application/json" \
@@ -47,15 +67,17 @@ jobs:
               \"eventType\": \"CUSTOM_ANNOTATION\",
               \"title\": \"Stage: Precommit ${{ job.status }}\",
               \"properties\": {
+                \"pipeline_id\": \"${{ github.run_id }}\",
+                \"dt.trace_id\": \"${{ needs.setup.outputs.trace_id }}\",
                 \"stage\": \"precommit\",
                 \"status\": \"${{ job.status }}\",
-                \"duration\": \"${PIPELINE_DURATION_SECONDS}s\",
-                \"run_url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+                \"duration\": \"${DURATION}s\"
               }
             }"
 
-  # 1. Security Scanning
+  # 3. Security Scanning
   security:
+    needs: setup
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -89,7 +111,8 @@ jobs:
           curl -X POST "${{ secrets.DT_URL }}/api/v2/metrics/ingest" \
             -H "Authorization: Api-Token ${{ secrets.DT_API_TOKEN }}" \
             -H "Content-Type: text/plain" \
-            --data-raw "pipeline.stage.duration,stage=security,status=${{ job.status }} $DURATION"
+            -H "traceparent: ${{ needs.setup.outputs.traceparent }}" \
+            --data-raw "pipeline.stage.duration,stage=security,status=${{ job.status }},pipeline_id=${{ github.run_id }},dt.trace_id=${{ needs.setup.outputs.trace_id }} $DURATION"
           
           curl -X POST "${{ secrets.DT_URL }}/api/v2/events/ingest" \
             -H "Authorization: Api-Token ${{ secrets.DT_API_TOKEN }}" \
@@ -98,14 +121,17 @@ jobs:
               \"eventType\": \"CUSTOM_ANNOTATION\",
               \"title\": \"Stage: Security ${{ job.status }}\",
               \"properties\": {
+                \"pipeline_id\": \"${{ github.run_id }}\",
+                \"dt.trace_id\": \"${{ needs.setup.outputs.trace_id }}\",
                 \"stage\": \"security\",
                 \"status\": \"${{ job.status }}\",
                 \"duration\": \"${DURATION}s\"
               }
             }"
 
-  # 2. Quality and Tests
+  # 4. Quality and Tests
   quality_and_tests:
+    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Start timer
@@ -120,17 +146,12 @@ jobs:
           npm install --ignore-scripts
           npm test -- --coverage || echo "No tests defined yet"
 
-      # Correct skip logic
       - name: SonarCloud Scan
         if: ${{ github.event_name == 'push' || !contains(github.event.pull_request.labels.*.name, 'skip-sonar') }}
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           SONAR_TOKEN: "${{ secrets.SONAR_TOKEN }}"
-
-      - name: SonarCloud Scan skipped
-        if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'skip-sonar') }}
-        run: echo "Skipping SonarCloud scan because PR has label 'skip-sonar'."
 
       - name: End timer and Telemetry
         if: always()
@@ -139,7 +160,8 @@ jobs:
           curl -X POST "${{ secrets.DT_URL }}/api/v2/metrics/ingest" \
             -H "Authorization: Api-Token ${{ secrets.DT_API_TOKEN }}" \
             -H "Content-Type: text/plain" \
-            --data-raw "pipeline.stage.duration,stage=quality,status=${{ job.status }} $DURATION"
+            -H "traceparent: ${{ needs.setup.outputs.traceparent }}" \
+            --data-raw "pipeline.stage.duration,stage=quality,status=${{ job.status }},pipeline_id=${{ github.run_id }},dt.trace_id=${{ needs.setup.outputs.trace_id }} $DURATION"
           
           curl -X POST "${{ secrets.DT_URL }}/api/v2/events/ingest" \
             -H "Authorization: Api-Token ${{ secrets.DT_API_TOKEN }}" \
@@ -148,14 +170,17 @@ jobs:
               \"eventType\": \"CUSTOM_ANNOTATION\",
               \"title\": \"Stage: Quality ${{ job.status }}\",
               \"properties\": {
+                \"pipeline_id\": \"${{ github.run_id }}\",
+                \"dt.trace_id\": \"${{ needs.setup.outputs.trace_id }}\",
                 \"stage\": \"quality\",
                 \"status\": \"${{ job.status }}\",
                 \"duration\": \"${DURATION}s\"
               }
             }"
 
-  # 3. Docker Scout
+  # 5. Docker Scout
   docker_scout:
+    needs: setup
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -189,4 +214,20 @@ jobs:
           curl -X POST "${{ secrets.DT_URL }}/api/v2/metrics/ingest" \
             -H "Authorization: Api-Token ${{ secrets.DT_API_TOKEN }}" \
             -H "Content-Type: text/plain" \
-            --data-raw "pipeline.stage.duration,stage=docker_scout,status=${{ job.status }} $DURATION"
+            -H "traceparent: ${{ needs.setup.outputs.traceparent }}" \
+            --data-raw "pipeline.stage.duration,stage=docker_scout,status=${{ job.status }},pipeline_id=${{ github.run_id }},dt.trace_id=${{ needs.setup.outputs.trace_id }} $DURATION"
+          
+          curl -X POST "${{ secrets.DT_URL }}/api/v2/events/ingest" \
+            -H "Authorization: Api-Token ${{ secrets.DT_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"eventType\": \"CUSTOM_ANNOTATION\",
+              \"title\": \"Stage: Docker Scout ${{ job.status }}\",
+              \"properties\": {
+                \"pipeline_id\": \"${{ github.run_id }}\",
+                \"dt.trace_id\": \"${{ needs.setup.outputs.trace_id }}\",
+                \"stage\": \"docker_scout\",
+                \"status\": \"${{ job.status }}\",
+                \"duration\": \"${DURATION}s\"
+              }
+            }"
