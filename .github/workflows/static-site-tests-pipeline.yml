@@ -15,6 +15,7 @@ jobs:
     outputs:
       traceparent: ${{ steps.trace.outputs.traceparent }}
       trace_id: ${{ steps.trace.outputs.trace_id }}
+      pipeline_start_ts: ${{ steps.pipeline_start.outputs.pipeline_start_ts }}
     steps:
       - name: Generate Trace Context
         id: trace
@@ -29,6 +30,17 @@ jobs:
           echo "--- INITIAL ID GENERATION ---"
           echo "Trace ID: ${{ steps.trace.outputs.trace_id }}"
           echo "GitHub Run ID: ${{ github.run_id }}"
+
+      - name: Push pipeline start metric (Prometheus)
+        id: pipeline_start
+        continue-on-error: true
+        run: |
+          START_TS=$(date +%s)
+          echo "pipeline_start_ts=${START_TS}" >> $GITHUB_OUTPUT
+          TARGET_URL="${PUSHGATEWAY_URL:-http://localhost:9091}/metrics/job/ac_pipeline_run/instance/0010"
+          curl -sS -X POST "${TARGET_URL}" \
+            -H "Content-Type: text/plain" \
+            --data-binary "pipeline_run_start_timestamp{run_number=\"1\",environment=\"${{ github.ref_name }}\",source=\"${{ github.event_name }}\"} ${START_TS}"
 
   # 2. Pre-commit checks
   precommit:
@@ -211,6 +223,17 @@ jobs:
         if: always()
         run: |
           DURATION=$(( $(date +%s) - START_TIME ))
+          PIPELINE_END_TS=$(date +%s)
+          PIPELINE_START_TS=${{ needs.setup.outputs.pipeline_start_ts }}
+          PIPELINE_DURATION_MS=$(( (PIPELINE_END_TS - PIPELINE_START_TS) * 1000 ))
+          PIPELINE_STATUS=$(echo "${{ job.status }}" | tr '[:lower:]' '[:upper:]')
+
+          TARGET_URL="${PUSHGATEWAY_URL:-http://localhost:9091}/metrics/job/ac_pipeline_run/instance/0010"
+          printf -v PROM_PAYLOAD 'pipeline_run_end_timestamp{run_number="%s",environment="%s",source="%s",status="%s"} %s\npipeline_run_duration_ms{run_number="%s",environment="%s",source="%s",status="%s"} %s' "${{ github.run_number }}" "${{ github.ref_name }}" "${{ github.event_name }}" "${PIPELINE_STATUS}" "${PIPELINE_END_TS}" "${{ github.run_number }}" "${{ github.ref_name }}" "${{ github.event_name }}" "${PIPELINE_STATUS}" "${PIPELINE_DURATION_MS}"
+          curl -sS -X POST "${TARGET_URL}" \
+            -H "Content-Type: text/plain" \
+            --data-binary "${PROM_PAYLOAD}" || true
+
           curl -X POST "${{ secrets.DT_URL }}/api/v2/metrics/ingest" \
             -H "Authorization: Api-Token ${{ secrets.DT_API_TOKEN }}" \
             -H "Content-Type: text/plain" \
