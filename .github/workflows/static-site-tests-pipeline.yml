@@ -37,10 +37,10 @@ jobs:
         run: |
           START_TS=$(date +%s)
           echo "pipeline_start_ts=${START_TS}" >> $GITHUB_OUTPUT
-          TARGET_URL="${PUSHGATEWAY_URL:-http://localhost:9091}/metrics/job/ac_pipeline_run/instance/0010"
+          TARGET_URL="http://localhost:9091/metrics/job/ac_pipeline_run/instance/0011"
           curl -sS -X POST "${TARGET_URL}" \
             -H "Content-Type: text/plain" \
-            --data-binary "pipeline_run_start_timestamp{run_number=\"1\",environment=\"${{ github.ref_name }}\",source=\"${{ github.event_name }}\"} ${START_TS}"
+            --data-binary "pipeline_run_start_timestamp{run_number=\"1\",environment=\"dev\",source=\"jenkins\"} ${START_TS}"
 
   # 2. Pre-commit checks
   precommit:
@@ -86,6 +86,35 @@ jobs:
                 \"duration\": \"${DURATION}s\"
               }
             }"
+
+  # 6. Finalize pipeline metrics
+  pipeline_finalize:
+    needs: [setup, precommit, security, quality_and_tests, docker_scout]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Push pipeline end metrics (Prometheus)
+        continue-on-error: true
+        run: |
+          PIPELINE_END_TS=$(date +%s)
+          PIPELINE_START_TS=${{ needs.setup.outputs.pipeline_start_ts }}
+          if [ -z "${PIPELINE_START_TS}" ]; then
+            PIPELINE_START_TS=${PIPELINE_END_TS}
+          fi
+          PIPELINE_DURATION_MS=$(( (PIPELINE_END_TS - PIPELINE_START_TS) * 1000 ))
+
+          PIPELINE_STATUS="SUCCESS"
+          if [ "${{ needs.precommit.result }}" = "failure" ] || [ "${{ needs.security.result }}" = "failure" ] || [ "${{ needs.quality_and_tests.result }}" = "failure" ] || [ "${{ needs.docker_scout.result }}" = "failure" ]; then
+            PIPELINE_STATUS="FAILURE"
+          elif [ "${{ needs.precommit.result }}" = "cancelled" ] || [ "${{ needs.security.result }}" = "cancelled" ] || [ "${{ needs.quality_and_tests.result }}" = "cancelled" ] || [ "${{ needs.docker_scout.result }}" = "cancelled" ]; then
+            PIPELINE_STATUS="CANCELLED"
+          fi
+
+          TARGET_URL="http://localhost:9091/metrics/job/ac_pipeline_run/instance/0011"
+          printf -v PROM_PAYLOAD 'pipeline_run_end_timestamp{run_number="1",environment="dev",source="jenkins",status="%s"} %s\npipeline_run_duration_ms{run_number="1",environment="dev",source="jenkins",status="%s"} %s' "${PIPELINE_STATUS}" "${PIPELINE_END_TS}" "${PIPELINE_STATUS}" "${PIPELINE_DURATION_MS}"
+          curl -sS -X POST "${TARGET_URL}" \
+            -H "Content-Type: text/plain" \
+            --data-binary "${PROM_PAYLOAD}"
 
   # 3. Security Scanning
   security:
@@ -223,17 +252,6 @@ jobs:
         if: always()
         run: |
           DURATION=$(( $(date +%s) - START_TIME ))
-          PIPELINE_END_TS=$(date +%s)
-          PIPELINE_START_TS=${{ needs.setup.outputs.pipeline_start_ts }}
-          PIPELINE_DURATION_MS=$(( (PIPELINE_END_TS - PIPELINE_START_TS) * 1000 ))
-          PIPELINE_STATUS=$(echo "${{ job.status }}" | tr '[:lower:]' '[:upper:]')
-
-          TARGET_URL="${PUSHGATEWAY_URL:-http://localhost:9091}/metrics/job/ac_pipeline_run/instance/0010"
-          printf -v PROM_PAYLOAD 'pipeline_run_end_timestamp{run_number="%s",environment="%s",source="%s",status="%s"} %s\npipeline_run_duration_ms{run_number="%s",environment="%s",source="%s",status="%s"} %s' "${{ github.run_number }}" "${{ github.ref_name }}" "${{ github.event_name }}" "${PIPELINE_STATUS}" "${PIPELINE_END_TS}" "${{ github.run_number }}" "${{ github.ref_name }}" "${{ github.event_name }}" "${PIPELINE_STATUS}" "${PIPELINE_DURATION_MS}"
-          curl -sS -X POST "${TARGET_URL}" \
-            -H "Content-Type: text/plain" \
-            --data-binary "${PROM_PAYLOAD}" || true
-
           curl -X POST "${{ secrets.DT_URL }}/api/v2/metrics/ingest" \
             -H "Authorization: Api-Token ${{ secrets.DT_API_TOKEN }}" \
             -H "Content-Type: text/plain" \
